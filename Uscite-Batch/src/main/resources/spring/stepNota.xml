@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+	
+	<import resource="datasource.xml" />
+	<import resource="mappers.xml" />
+	
+	<bean id="storicoNotaReader" class="org.springframework.batch.item.database.JdbcPagingItemReader" scope="step">
+		<property name="dataSource" ref="dataSource" />
+		<property name="queryProvider">
+			<bean class="org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean">
+				<property name="dataSource" ref="dataSource" />
+				<property name="selectClause" value="select storicoNota.id_processo_erogazione id, revinfo.timestamp timestamp, revinfo.id idRevisione, storicoNota.username username" />
+				<property name="fromClause" value="from processo_erogazione_AUD storicoNota join processo_erogazione nota on storicoNota.id_processo_erogazione = nota.id_processo_erogazione join revinfo on revinfo.id = storicoNota.REV" />
+				<property name="whereClause" value="where revinfo.timestamp>:timestamp and revinfo.timestamp = (select max(timestamp) from revinfo where id = storicoNota.REV )" />
+				<property name="sortKey" value="id" />
+			</bean>
+		</property>
+		<property name="parameterValues">
+		   <map>
+				<entry key="timestamp" value="#{jobParameters['timestamp']}" />
+		   </map>
+		</property>
+		<property name="pageSize" value="10" />
+		<property name="rowMapper" ref="rowMapper"/>
+		<property name="saveState" value="false"/>		
+	</bean>
+	
+	<bean id="notaWriter" class="org.springframework.batch.item.database.JdbcBatchItemWriter">
+		<property name="dataSource" ref="dataSource" />
+		<property name="sql" value="update processo_erogazione set username = :username where id_processo_erogazione=:id"/>
+		<!-- It will take care matching between object property and sql name parameter -->
+		<property name="itemSqlParameterSourceProvider" ref="beanPropertyItemSqlParameterSourceProvider"/>
+  	</bean>
+</beans>
