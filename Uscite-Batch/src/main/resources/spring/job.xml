@@ -29,30 +29,32 @@
 
 	<beans:bean id="runIdIncrementer" class="org.springframework.batch.core.launch.support.RunIdIncrementer" />
 	
-	 <beans:bean id="entityRecordProcessor" class="it.ccse.uscite.batch.usernameBatch.EntityRecordProcessor" />
+	 <beans:bean id="entityRecordProcessor" class="it.ccse.uscite.batch.usernameBatch.EntityRecordProcessor" >
+	 	<beans:property name="maxWaitTime" value="3000"/>
+	 </beans:bean>
 	
 	
 	<beans:bean id="poolThreadTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
-		<beans:property name="poolSize" value="5" />
+		<beans:property name="poolSize" value="7" />
 	</beans:bean>
-	<job id="usernameJob" incrementer="runIdIncrementer" job-repository="jobRepository" restartable="true">
+	<job id="usernameJob" incrementer="runIdIncrementer" job-repository="jobRepository" restartable="true" >
 
 		<step id="usernamePraticaStep" next="usernameNotaStep" >
-			<tasklet transaction-manager="txManager" task-executor="poolThreadTaskExecutor" >
+			<tasklet transaction-manager="txManager" task-executor="poolThreadTaskExecutor" throttle-limit="5">
 				<chunk reader="synchStoricoPraticaReader" processor="entityRecordProcessor"
-					writer="praticaWriter" commit-interval="2" />
+					writer="praticaWriter" commit-interval="3" />
 			</tasklet>
 		</step>
 		<step id="usernameNotaStep" next="usernameComitatoStep">
-			<tasklet transaction-manager="txManager" task-executor="poolThreadTaskExecutor">
+			<tasklet transaction-manager="txManager" task-executor="poolThreadTaskExecutor" throttle-limit="5">
 				<chunk reader="storicoNotaReader" processor="entityRecordProcessor"
-					writer="notaWriter" commit-interval="2" />
+					writer="notaWriter" commit-interval="3" />
 			</tasklet>
 		</step> 
 		<step id="usernameComitatoStep" >
-			<tasklet transaction-manager="txManager" task-executor="poolThreadTaskExecutor" >
+			<tasklet transaction-manager="txManager" task-executor="poolThreadTaskExecutor" throttle-limit="5">
 				<chunk reader="storicoComitatoReader" processor="entityRecordProcessor"
-					writer="comitatoWriter" commit-interval="2" />
+					writer="comitatoWriter" commit-interval="3" />
 			</tasklet>
 		</step>
 	</job>
