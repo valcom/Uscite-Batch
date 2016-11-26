@@ -139,12 +139,14 @@
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
+				<excludes><exclude>*</exclude></excludes>
 			</resource>
 		</resources>
 		<testSourceDirectory>src/test/java</testSourceDirectory>
 		<testResources>
 			<testResource>
 				<directory>src/test/resources</directory>
+				<excludes><exclude>*</exclude></excludes>
 			</testResource>
 		</testResources>
 		<outputDirectory>target/classes</outputDirectory>
